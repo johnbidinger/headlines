@@ -34,4 +34,4 @@ def get_news(publication="bbc"):
 if __name__ == "__main__":
     # if sys.platform == 'darwin':
 
-    app.run()
+    app.run(host='0.0.0.0')
