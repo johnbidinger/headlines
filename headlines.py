@@ -14,12 +14,9 @@ RSS_FEEDS = {
 # FOX_FEED = "http://feeds.foxnews.com/foxnews/latest"
 
 @app.route("/")
-@app.route("bbc")
-def bbc():
-    return get_news('bbc')
-
-def get_news(publication):
-    feed = feedparser.parse(publication)
+@app.route("/<publication>")
+def get_news(publication="bbc"):
+    feed = feedparser.parse(RSS_FEEDS[publication])
     first_article = feed['entries'][0]
 
     return """<html>
