@@ -1,5 +1,10 @@
+from pathlib import Path
 import sys
 import os
+
+from dotenv import load_dotenv
+env_path = Path('.')/'.env'
+load_dotenv(dotenv_path=env_path)
 
 import feedparser
 from flask import Flask, render_template, request
