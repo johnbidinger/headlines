@@ -1,6 +1,9 @@
+import sys
+import os
+
 import feedparser
 from flask import Flask, render_template, request
-import sys
+
 import json
 import urllib
 
@@ -12,8 +15,16 @@ RSS_FEEDS = {
     'fox': 'http://feeds.foxnews.com/foxnews/latest',
     'iol': 'http://www.iol.co.za/cmlink/1.640'
 }
-WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?q={}&units=imperial&appid=fea0835dbeecc42142934ae319c8ad61"
-CURRENCY_URL = "https://openexchangerates.org/api/latest.json?app_id=8054ccbe02994e3c93c4c1ea6eb47bc8"
+DOTENV_WEATHER_APP_ID = os.environ.get('WEATHER_API_APP_ID')
+DOTENV_CURRENCY_APP_ID = os.environ.get('CURRENCY_API_APP_ID')
+COUNTRIES_AND_CODES_URL = os.environ.get('CURRENCY_API_COUNTRIES')
+
+WEATHER_URL = "http://api.openweathermap.org/data/2.5/weather?q={}&units=imperial&appid=" #.format(os.environ.get('WEATHER_API_APP_ID')
+WEATHER_URL += DOTENV_WEATHER_APP_ID
+
+CURRENCY_URL = "https://openexchangerates.org/api/latest.json?app_id=" #.format(os.environ.get('CURRENCY_API_APP_ID'))
+CURRENCY_URL += DOTENV_CURRENCY_APP_ID
+
 # FOX_FEED = "http://feeds.foxnews.com/foxnews/latest"
 DEFAULTS = {
     'publication': 'bbc',
@@ -41,9 +52,9 @@ def home():
     currency_to = request.args.get("currency_to")
     if not currency_to:
         currency_to = DEFAULTS['currency_to']
-    rate, currencies = get_rate(currency_from, currency_to)
+    rate, currencies, countries = get_rate(currency_from, currency_to)
     return render_template("home.html", articles=articles, weather=weather,
-                            currency_from=currency_from, currency_to=currency_to, rate=rate, currencies=sorted(currencies))
+                            currency_from=currency_from, currency_to=currency_to, rate=rate, currencies=sorted(currencies), countries_and_codes=countries)
 
 def get_news(query):
     if not query or query.lower() not in RSS_FEEDS:
@@ -78,11 +89,13 @@ def get_weather(query):
     return weather
 
 def get_rate(frm, to):
+    countries_and_codes = urllib.request.urlopen(COUNTRIES_AND_CODES_URL).read()
+    countries_and_codes = json.loads(countries_and_codes)
     all_currency = urllib.request.urlopen(CURRENCY_URL).read()
     parsed = json.loads(all_currency).get('rates')
     frm_rate = parsed.get(frm.upper())
     to_rate = parsed.get(to.upper())
-    return (to_rate / frm_rate, parsed.keys())
+    return (to_rate / frm_rate, parsed.keys(), countries_and_codes)
 
 if __name__ == "__main__":
     # if sys.platform == 'darwin':

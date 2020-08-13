@@ -6,7 +6,7 @@
         <h1>Headlines</h1>
         <h2>Current weather</h2>
         <form>
-            <input type="text" name="city" placeholder="weather search" >
+            <input type="text" name="city" placeholder="{{weather.city}}" >
             <input type="submit" value="Submit">
         </form>
         <p>City: <b>{{weather.city}}, {{weather.country}}</b></p>
@@ -15,12 +15,12 @@
         <form>
             from: <select name="currency_from">
                     {% for currency in currencies %}
-                        <option value="{{currency}}" {{'selected="selected"' if currency_from==currency}}>{{currency}}</option>
+                        <option value="{{currency}}" {{'selected="selected"' if currency_from==currency}}>{{countries_and_codes[currency]}}</option>
                     {% endfor %}
                     </select>
             to: <select name="currency_from">
                     {% for currency in currencies %}
-                        <option value="{{currency}}" {{'selected="selected"' if currency_to==currency}}>{{currency}}</option>
+                        <option value="{{currency}}" {{'selected="selected"' if currency_to==currency}}>{{countries_and_codes[currency]}}</option>
                     {% endfor %}
                 </select>
             <input type="submit" value="Submit" >
