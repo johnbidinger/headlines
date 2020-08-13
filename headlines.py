@@ -1,13 +1,14 @@
 from pathlib import Path
 import sys
 import os
+import datetime
 
 from dotenv import load_dotenv
 env_path = Path('.')/'.env'
 load_dotenv(dotenv_path=env_path)
 
 import feedparser
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, make_response
 
 import json
 import urllib
@@ -33,33 +34,55 @@ CURRENCY_URL += DOTENV_CURRENCY_APP_ID
 # FOX_FEED = "http://feeds.foxnews.com/foxnews/latest"
 DEFAULTS = {
     'publication': 'bbc',
-    'city' : 'Taneytown',
+    'city' : 'Baltimore',
     'currency_from' : 'GBP',
     'currency_to' : 'USD'
 }
 
+def get_value_with_fallback(key):
+    if request.args.get(key):
+        return request.args.get(key)
+    if request.cookies.get(key):
+        return request.cookies.get(key)
+    return DEFAULTS[key]
+
 @app.route("/")
 # @app.route("/<publication>")
 def home():
-    publication = request.args.get('publication')
-    if not publication:
-        publication = DEFAULTS['publication']
+    # get custom headlines
+    publication = get_value_with_fallback('publication')
     articles = get_news(publication)
+
     #get custom weather based on user input or default
-    city = request.args.get('city')
-    if not city:
-        city = DEFAULTS['city']
+    city = get_value_with_fallback('city')
     weather = get_weather(city)
+
     # get custom currency based on user input or default
-    currency_from = request.args.get("currency_from")
-    if not currency_from:
-        currency_from = DEFAULTS['currency_from']
-    currency_to = request.args.get("currency_to")
-    if not currency_to:
-        currency_to = DEFAULTS['currency_to']
+    currency_from = get_value_with_fallback("currency_from")
+    currency_to = get_value_with_fallback("currency_to")
     rate, currencies, countries = get_rate(currency_from, currency_to)
-    return render_template("home.html", articles=articles, weather=weather,
-                            currency_from=currency_from, currency_to=currency_to, rate=rate, currencies=sorted(currencies), countries_and_codes=countries)
+
+    response = make_response(render_template("home.html", 
+        articles=articles,
+        weather=weather,
+        currency_from=currency_from,
+        currency_to=currency_to,
+        rate=rate,
+        currencies=sorted(currencies),
+        countries_and_codes=countries))
+    expires = datetime.datetime.now() + datetime.timedelta(days=365)
+    
+    response.set_cookie("publication", publication, expires=expires)
+
+    response.set_cookie("city", city, expires=expires)
+    response.set_cookie("currency_from", currency_from, expires=expires)
+    response.set_cookie("currency_to", currency_to, expires=expires)
+
+    return response
+    # render_template("home.html", articles=articles, weather=weather,
+                            # currency_from=currency_from, currency_to=currency_to, rate=rate, currencies=sorted(currencies), countries_and_codes=countries)
+
+
 
 def get_news(query):
     if not query or query.lower() not in RSS_FEEDS:
